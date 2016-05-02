@@ -75,6 +75,16 @@ int Process_memory::generate_memory(){
 	return (int)memory;
 }
 
+int Process_memory::largest_memory_required(){
+	int max_mem_required=0;
+	for(int Process=0;Process<NUMBER_OF_PROCESSES;Process++){
+		if(Process_list[Process].memory_footprint>max_mem_required){
+			max_mem_required=Process_list[Process].memory_footprint;
+		}
+	}
+	return max_mem_required;
+}
+
 /*****************************************************************
 *function: Generate Cycles()
 
@@ -130,10 +140,6 @@ void Process_memory::custom_memory_simulation(int size_of_memory){
 int Process_memory::my_alloc(Process Process_to_queue,int size_of_memory,std::string queue_source){
 	int free_memory_space=0;
 	int free_memory_start=0;
-	if(Process_to_queue.memory_footprint>size_of_memory){
-		std::cout<<"Critical Error. Processes greater than total memory size. Shutting down."<<std::endl;
-		return 1;
-	}
 	//loop wiil loop through array to find a space beg enough to host the current process memory
 	for(int memory_location=0;memory_location<size_of_memory;memory_location++){
 		if(memory_space[memory_location]==0){

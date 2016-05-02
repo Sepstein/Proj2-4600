@@ -13,10 +13,10 @@ as the list of programs that will be allocated to memory
 class Process_memory{
 	public:
 		Process_memory();
-		~Process_memory(){};
 		void add_process(int);//adds process to ueue of processes to be executed
 		void custom_memory_simulation(int);//memory allocation using my_alloc and my_free
 		int return_memory();//returns process memory
+		int largest_memory_required();//returns largest process memory requirement
 	private:
 		//stats for each individual process
 		struct Process{
