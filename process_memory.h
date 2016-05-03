@@ -14,6 +14,7 @@ class Process_memory{
 	public:
 		Process_memory();
 		void add_process(int);//adds process to ueue of processes to be executed
+		void default_memory_simulation(int);
 		void custom_memory_simulation(int);//memory allocation using my_alloc and my_free
 		int return_memory();//returns process memory
 		int largest_memory_required();//returns largest process memory requirement
@@ -25,9 +26,11 @@ class Process_memory{
 			float memory_footprint;
 			int cycles_spent;
 			Process(int,float,int,int);
+			Process(void*){};
 		};
 		std::vector<Process> Process_list;
 		std::vector<Process> Ready_Queue;
+		std::vector<Process*> Ready_Queue_default;
 		std::vector<Process> Wait_Queue; 
 		struct Memory_location{
 			int process_ID;
@@ -37,10 +40,12 @@ class Process_memory{
 		};
 		std::vector<Memory_location> process_memory_location;
 		int* memory_space;
+		int allocated_memory;
+		float cache_miss_rate;
+		float cache_hit_rate;
 		int total_cycle_time;
 		int total_memory;
 		int number_processes_completed;
-		int memory_miss;
 		int number_processes_arrived;
 		int generate_cycles();
 		int generate_memory();

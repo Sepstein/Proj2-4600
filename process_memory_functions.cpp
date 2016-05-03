@@ -100,14 +100,15 @@ void Process_memory::custom_memory_simulation(int size_of_memory){
 	number_processes_completed=0;
 	number_processes_arrived=0;
 	total_cycle_time=0;
+	cache_miss_rate=0;
+	cache_hit_rate=0;
 	memory_space=(int*)malloc(size_of_memory*sizeof(int));//the memory space to be used
 	for(int i=0;i<size_of_memory;i++){
 		memory_space[i]=0;//sets all memory to 0 to signify free space
 	}
 	while(number_processes_completed!=NUMBER_OF_PROCESSES){//goes through all processes until all are executed
 		if(total_cycle_time%50==0&&number_processes_arrived!=NUMBER_OF_PROCESSES){//adds new process every 50 cycles until no new ones can be added
-			if(my_alloc(Process_list[number_processes_arrived],size_of_memory,"new process")!=0)//alocates space for the new process.
-				return;
+			my_alloc(Process_list[number_processes_arrived],size_of_memory,"new process");//alocates space for the new process.
 			++number_processes_arrived;
 		}
 		++Ready_Queue.front().cycles_spent;//uses FIFO structure, so process first in will have its cycles incremented first
@@ -115,13 +116,65 @@ void Process_memory::custom_memory_simulation(int size_of_memory){
 			my_free(Ready_Queue.front());//when process has finished incrementing, frees it.
 			++number_processes_completed;
 			if(!Wait_Queue.empty()){//adds a new process from the wait queue of processes if possible
-				my_alloc(Wait_Queue.front(),size_of_memory,"waiting process");
+				while(my_alloc(Wait_Queue.front(),size_of_memory,"waiting process")==1){
+					if(Wait_Queue.empty())
+						break;
+				}
 			}
 		}
 		++total_cycle_time;
 	}
-	std::cout<<"Done! Time took: "<<total_cycle_time<<" cycles"<<std::endl;
+	std::cout<<"Total cycles: "<<total_cycle_time<<std::endl;
+	std::cout<<"Cache hit rate: "<<cache_hit_rate/(cache_miss_rate+cache_hit_rate)<<std::endl;
 	free(memory_space);
+}
+
+void Process_memory::default_memory_simulation(int size_of_memory){
+	number_processes_completed=0;
+	number_processes_arrived=0;
+	total_cycle_time=0;
+	allocated_memory=0;
+	cache_miss_rate=0;
+	cache_hit_rate=0;
+	while(number_processes_completed!=NUMBER_OF_PROCESSES){//goes through all processes until all are executed
+		if(total_cycle_time%50==0&&number_processes_arrived!=NUMBER_OF_PROCESSES){//adds new process every 50 cycles until no new ones can be added
+//			std::cout<<allocated_memory+Process_list[number_processes_arrived].memory_footprint<<"    "<<size_of_memory<<std::endl;
+			if(allocated_memory+Process_list[number_processes_arrived].memory_footprint<size_of_memory){
+				++cache_hit_rate;
+				Process *ready=(Process*)malloc(sizeof(Process));
+				*ready=Process_list[number_processes_arrived];
+				Ready_Queue_default.push_back(ready);
+				allocated_memory+=Process_list[number_processes_arrived].memory_footprint;
+			}
+			else{
+				++cache_miss_rate;
+				Wait_Queue.push_back(Process_list[number_processes_arrived]);
+			}
+			++number_processes_arrived;
+		}
+		++Ready_Queue_default.front()->cycles_spent;//uses FIFO structure, so process first in will have its cycles incremented first
+		if(Ready_Queue_default.front()->cycles_spent==Ready_Queue_default.front()->number_of_cycles){
+			allocated_memory-=Ready_Queue_default.front()->memory_footprint;
+			free((void*)Ready_Queue_default.front());
+			Ready_Queue_default.erase(Ready_Queue_default.begin()+0);//when process has finished incrementing, frees it.
+			++number_processes_completed;
+			if(!Wait_Queue.empty()){//adds a new process from the wait queue of processes if possible
+				if(Wait_Queue.front().memory_footprint+allocated_memory<size_of_memory){	
+					++cache_hit_rate;
+					allocated_memory+=Wait_Queue.front().memory_footprint;
+					Process *ready=(Process*)malloc(sizeof(Process));
+					*ready=Wait_Queue.front();
+					Wait_Queue.erase(Wait_Queue.begin()+0);
+					Ready_Queue_default.push_back(ready);
+				}
+				else
+					++cache_miss_rate;
+			}
+		}
+		++total_cycle_time;
+	}
+	std::cout<<"Total cycles: "<<total_cycle_time<<std::endl;
+	std::cout<<"Cache hit rate: "<<cache_hit_rate/(cache_miss_rate+cache_hit_rate)<<std::endl;
 }
 
 /*****************************************************************
@@ -131,8 +184,7 @@ void Process_memory::custom_memory_simulation(int size_of_memory){
 			   int: The size of the total memory block. 
 			   std::string: lets function know if process being added
 			   comes from ready queue or wait queue.
-*Return Value: int, returns 1 if a single process memory exceeds current
-			   memory workspace
+*Return Value: int, returns 1 if another process can potentially be allocated
 *Description:  Allocates each process onto the memory lock so that it can
                soon begin to be executed.
 *******************************************************************/
@@ -152,6 +204,7 @@ int Process_memory::my_alloc(Process Process_to_queue,int size_of_memory,std::st
 			free_memory_space=0;
 		}
 		if(free_memory_space==Process_to_queue.memory_footprint){//memory big enough to hold process memory
+			++cache_hit_rate;
 			Memory_location new_memory_location(Process_to_queue.process_ID,free_memory_start,Process_to_queue.memory_footprint);
 			process_memory_location.push_back(new_memory_location);//adds indicator of process location in memory
 			for(int j=free_memory_start;j<free_memory_start+free_memory_space;j++){
@@ -161,21 +214,21 @@ int Process_memory::my_alloc(Process Process_to_queue,int size_of_memory,std::st
 			if(queue_source=="waiting process"){
 				Wait_Queue.erase(Wait_Queue.begin()+0);//erases process from wait queue if added from there.
 			}
-			break;
+			return 1;
 		}
 		if(memory_location+1==size_of_memory){//no free space big enough to hold memory
+			++cache_miss_rate;
 			if(queue_source=="new process"){
-				memory_miss++;
+				++cache_miss_rate;
 				Wait_Queue.push_back(Process_to_queue);//adds process to wait queue to be checked later.
 			}
-			break;
+			return 0;
 		}
 	}
-	return 0;
 }
 
 /*****************************************************************
-*function: my alloc()
+*function: my free()
 
 *Paramater:    struct Process: The process to be added to memory.
 *Return Value: NULL
