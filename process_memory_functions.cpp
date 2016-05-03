@@ -105,6 +105,7 @@ void Process_memory::custom_memory_simulation(int size_of_memory){
 	memory_space=(int*)malloc(size_of_memory*sizeof(int));//the memory space to be used
 	for(int i=0;i<size_of_memory;i++){
 		memory_space[i]=0;//sets all memory to 0 to signify free space
+
 	}
 	while(number_processes_completed!=NUMBER_OF_PROCESSES){//goes through all processes until all are executed
 		if(total_cycle_time%50==0&&number_processes_arrived!=NUMBER_OF_PROCESSES){//adds new process every 50 cycles until no new ones can be added
@@ -124,7 +125,7 @@ void Process_memory::custom_memory_simulation(int size_of_memory){
 		}
 		++total_cycle_time;
 	}
-	std::cout<<"Total cycles: "<<total_cycle_time<<std::endl;
+	//std::cout<<"Total cycles: "<<total_cycle_time<<std::endl;
 	std::cout<<"Cache hit rate: "<<cache_hit_rate/(cache_miss_rate+cache_hit_rate)<<std::endl;
 	free(memory_space);
 }
@@ -173,7 +174,7 @@ void Process_memory::default_memory_simulation(int size_of_memory){
 		}
 		++total_cycle_time;
 	}
-	std::cout<<"Total cycles: "<<total_cycle_time<<std::endl;
+//	std::cout<<"Total cycles: "<<total_cycle_time<<std::endl;
 	std::cout<<"Cache hit rate: "<<cache_hit_rate/(cache_miss_rate+cache_hit_rate)<<std::endl;
 }
 

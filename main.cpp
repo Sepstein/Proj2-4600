@@ -12,6 +12,7 @@ call the memory allocation program.
 #include "process_memory.h"
 
 int main(void){
+	clock_t start_t=0,end_t=0;
 	srand(time(NULL));
 	Process_memory process_memory;//declares an instance of process memory which holds all relevant functions and processes for the simulation
 	for(int Process=0;Process<NUMBER_OF_PROCESSES;Process++){
@@ -20,10 +21,16 @@ int main(void){
 	std::cout<<"20 MB results:"<<std::endl;
 	std::cout<<"**************************************"<<std::endl;
 	std::cout<<"Default:"<<std::endl;
+	start_t=clock();
 	process_memory.default_memory_simulation(TWENTY_MB);
+	end_t=clock();
+	std::cout<<"Total Cycle Time:   "<<(int)(end_t-start_t)<<std::endl;
 	std::cout<<std::endl;
 	std::cout<<"Custom:"<<std::endl;
+	start_t=clock();
 	process_memory.custom_memory_simulation(TWENTY_MB);//The second part of the project requires us to use a memory block of size 20 MB
+	end_t=clock();
+	std::cout<<"Total Cycle Time: "<<(int)(end_t-start_t)<<std::endl;
 	int max_memory_required=process_memory.largest_memory_required();
 	int memory_size=process_memory.return_memory()*.5;
 	if(max_memory_required>memory_size)//used to guarantee that there will be enough memory space for each process.
@@ -32,10 +39,16 @@ int main(void){
 	std::cout<<memory_size<<" KB results:"<<std::endl;
 	std::cout<<"**************************************"<<std::endl;
 	std::cout<<"Default:"<<std::endl;
+	start_t=clock();
 	process_memory.custom_memory_simulation(memory_size);//Third part of assignment, half the size of needed memory
+	end_t=clock();
+	std::cout<<"Total Cycle Time: "<<(int)(end_t-start_t)<<std::endl;
 	std::cout<<std::endl;
 	std::cout<<"Custom:"<<std::endl;
+	start_t=clock();
 	process_memory.custom_memory_simulation(memory_size);
+	end_t=clock();
+	std::cout<<"Total Cycle Time: "<<(int)(end_t-start_t)<<std::endl;
 	std::cout<<"**************************************"<<std::endl<<std::endl;
 	memory_size=process_memory.return_memory()*.1;
 	if(max_memory_required>memory_size)
@@ -43,10 +56,15 @@ int main(void){
 	std::cout<<memory_size<<" KB results:"<<std::endl;
 	std::cout<<"**************************************"<<std::endl;
 	std::cout<<"Default:"<<std::endl;
+	start_t=clock();
 	process_memory.custom_memory_simulation(memory_size);//Third part of assignemnt, one tenth size of needed memory
-	std::cout<<std::endl;
-	std::cout<<"Custom:"<<std::endl;
+	end_t=clock();
+	std::cout<<"Total Cycle Time: "<<(int)(end_t-start_t)<<std::endl;
+	std::cout<<std::endl<<"Custom:"<<std::endl;
+	start_t=clock();
 	process_memory.custom_memory_simulation(memory_size);
+	end_t=clock();
+	std::cout<<"Total Cycle Time: "<<(int)(end_t-start_t)<<std::endl;
 	std::cout<<"**************************************"<<std::endl<<std::endl;
 	return 0;
 }
