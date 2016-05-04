@@ -105,27 +105,32 @@ void Process_memory::custom_memory_simulation(int size_of_memory){
 	memory_space=(int*)malloc(size_of_memory*sizeof(int));//the memory space to be used
 	for(int i=0;i<size_of_memory;i++){
 		memory_space[i]=0;//sets all memory to 0 to signify free space
-
 	}
 	while(number_processes_completed!=NUMBER_OF_PROCESSES){//goes through all processes until all are executed
+//		std::cout<<number_processes_completed<<std::endl;
 		if(total_cycle_time%50==0&&number_processes_arrived!=NUMBER_OF_PROCESSES){//adds new process every 50 cycles until no new ones can be added
 			my_alloc(Process_list[number_processes_arrived],size_of_memory,"new process");//alocates space for the new process.
 			++number_processes_arrived;
 		}
-		++Ready_Queue.front().cycles_spent;//uses FIFO structure, so process first in will have its cycles incremented first
-		if(Ready_Queue.front().cycles_spent==Ready_Queue.front().number_of_cycles){
-			my_free(Ready_Queue.front());//when process has finished incrementing, frees it.
-			++number_processes_completed;
-			if(!Wait_Queue.empty()){//adds a new process from the wait queue of processes if possible
-				while(my_alloc(Wait_Queue.front(),size_of_memory,"waiting process")==1){
-					if(Wait_Queue.empty())
+		for(int i=0;i<Ready_Queue.size();i++){
+			++Ready_Queue[i].cycles_spent;//uses FIFO structure, so process first in will have its cycles incremented first
+//			std::cout<<Ready_Queue[i].cycles_spent<<-Ready_Queue[i].number_of_cycles<<std::endl;
+			if(Ready_Queue[i].cycles_spent==Ready_Queue[i].number_of_cycles){
+				my_free(Ready_Queue[i],i);//when process has finished incrementing, frees it.
+				++number_processes_completed;
+				while(!Wait_Queue.empty()){//adds a new process from the wait queue of processes if possible
+					if(my_alloc(Wait_Queue.front(),size_of_memory,"waiting process")==1)
+						;
+					else
 						break;
 				}
 			}
 		}
+			//		std::cout<<std::endl<<std::endl;
+
 		++total_cycle_time;
 	}
-	//std::cout<<"Total cycles: "<<total_cycle_time<<std::endl;
+	std::cout<<"Total cycles: "<<total_cycle_time<<std::endl;
 	std::cout<<"Cache hit rate: "<<cache_hit_rate/(cache_miss_rate+cache_hit_rate)<<std::endl;
 	free(memory_space);
 }
@@ -138,6 +143,8 @@ void Process_memory::default_memory_simulation(int size_of_memory){
 	cache_miss_rate=0;
 	cache_hit_rate=0;
 	while(number_processes_completed!=NUMBER_OF_PROCESSES){//goes through all processes until all are executed
+		if(total_cycle_time>100000)
+			std::cout<<number_processes_completed<<"----"<<Ready_Queue_default.size()<<"----"<<Wait_Queue.size()<<"-----"<<allocated_memory<<std::endl;
 		if(total_cycle_time%50==0&&number_processes_arrived!=NUMBER_OF_PROCESSES){//adds new process every 50 cycles until no new ones can be added
 //			std::cout<<allocated_memory+Process_list[number_processes_arrived].memory_footprint<<"    "<<size_of_memory<<std::endl;
 			if(allocated_memory+Process_list[number_processes_arrived].memory_footprint<size_of_memory){
@@ -153,28 +160,34 @@ void Process_memory::default_memory_simulation(int size_of_memory){
 			}
 			++number_processes_arrived;
 		}
-		++Ready_Queue_default.front()->cycles_spent;//uses FIFO structure, so process first in will have its cycles incremented first
-		if(Ready_Queue_default.front()->cycles_spent==Ready_Queue_default.front()->number_of_cycles){
-			allocated_memory-=Ready_Queue_default.front()->memory_footprint;
-			free((void*)Ready_Queue_default.front());
-			Ready_Queue_default.erase(Ready_Queue_default.begin()+0);//when process has finished incrementing, frees it.
-			++number_processes_completed;
-			if(!Wait_Queue.empty()){//adds a new process from the wait queue of processes if possible
-				if(Wait_Queue.front().memory_footprint+allocated_memory<size_of_memory){	
-					++cache_hit_rate;
-					allocated_memory+=Wait_Queue.front().memory_footprint;
-					Process *ready=(Process*)malloc(sizeof(Process));
-					*ready=Wait_Queue.front();
-					Wait_Queue.erase(Wait_Queue.begin()+0);
-					Ready_Queue_default.push_back(ready);
+		for(int i=0;i<Ready_Queue_default.size();i++){
+			++Ready_Queue_default[i]->cycles_spent;
+			if(Ready_Queue_default[i]->cycles_spent==Ready_Queue_default[i]->number_of_cycles){
+				allocated_memory-=Ready_Queue_default[i]->memory_footprint;
+				free((void*)Ready_Queue_default[i]);
+				Ready_Queue_default.erase(Ready_Queue_default.begin()+i);//when process has finished incrementing, frees it.
+				++number_processes_completed;
+				while(1){//adds a new process from the wait queue of processes if possible
+					if(Wait_Queue.empty())
+						break;
+					else if(Wait_Queue.front().memory_footprint+allocated_memory<size_of_memory){
+						++cache_hit_rate;
+						allocated_memory+=Wait_Queue.front().memory_footprint;
+						Process *ready=(Process*)malloc(sizeof(Process));
+						*ready=Wait_Queue.front();
+						Wait_Queue.erase(Wait_Queue.begin()+0);
+						Ready_Queue_default.push_back(ready);
+					}
+					else{
+						++cache_miss_rate;
+						break;
+					}
 				}
-				else
-					++cache_miss_rate;
 			}
 		}
 		++total_cycle_time;
 	}
-//	std::cout<<"Total cycles: "<<total_cycle_time<<std::endl;
+	std::cout<<"Total cycles: "<<total_cycle_time<<std::endl;
 	std::cout<<"Cache hit rate: "<<cache_hit_rate/(cache_miss_rate+cache_hit_rate)<<std::endl;
 }
 
@@ -236,7 +249,7 @@ int Process_memory::my_alloc(Process Process_to_queue,int size_of_memory,std::st
 *Description:  Free memory process from the meory block of processes.
 *******************************************************************/
 
-void Process_memory::my_free(Process process_to_free){
+void Process_memory::my_free(Process process_to_free,int pos){
 	int process_ID_to_free=process_to_free.process_ID;
 	for(int i=0;i<process_memory_location.size();i++){
 		if(process_memory_location[i].process_ID==process_ID_to_free){
@@ -248,7 +261,7 @@ void Process_memory::my_free(Process process_to_free){
 			break;
 		}
 	}
-	Ready_Queue.erase(Ready_Queue.begin()+0);//frees Process from ready queue
+	Ready_Queue.erase(Ready_Queue.begin()+pos);//frees Process from ready queue
 }
 
 Process_memory::Memory_location::Memory_location(int a_process_ID,int a_process_location,int a_process_size){

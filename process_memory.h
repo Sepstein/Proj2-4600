@@ -49,6 +49,6 @@ class Process_memory{
 		int number_processes_arrived;
 		int generate_cycles();
 		int generate_memory();
-		void my_free(Process);
+		void my_free(Process,int);
 		int my_alloc(Process,int,std::string);
 };
