@@ -22,7 +22,7 @@ int main(void){
 	std::cout<<"**************************************"<<std::endl;
 	std::cout<<"Default:"<<std::endl;
 	process_memory.default_memory_simulation(TWENTY_MB);
-	std::cout<<"Custom:"<<std::endl;
+	std::cout<<std::endl<<"Custom:"<<std::endl;
 	process_memory.custom_memory_simulation(TWENTY_MB);//The second part of the project requires us to use a memory block of size 20 MB
 	int max_memory_required=process_memory.largest_memory_required();
 	int memory_size=process_memory.return_memory()*.5;

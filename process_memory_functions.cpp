@@ -106,6 +106,7 @@ void Process_memory::custom_memory_simulation(int size_of_memory){
 	for(int i=0;i<size_of_memory;i++){
 		memory_space[i]=0;//sets all memory to 0 to signify free space
 	}
+	clock_t begin=clock();
 	while(number_processes_completed!=NUMBER_OF_PROCESSES){//goes through all processes until all are executed
 //		std::cout<<number_processes_completed<<std::endl;
 		if(total_cycle_time%50==0&&number_processes_arrived!=NUMBER_OF_PROCESSES){//adds new process every 50 cycles until no new ones can be added
@@ -131,6 +132,7 @@ void Process_memory::custom_memory_simulation(int size_of_memory){
 		++total_cycle_time;
 	}
 	std::cout<<"Total cycles: "<<total_cycle_time<<std::endl;
+	std::cout<<"System time: "<<clock()-begin<<std::endl;
 	std::cout<<"Cache hit rate: "<<cache_hit_rate/(cache_miss_rate+cache_hit_rate)<<std::endl;
 	free(memory_space);
 }
@@ -142,6 +144,7 @@ void Process_memory::default_memory_simulation(int size_of_memory){
 	allocated_memory=0;
 	cache_miss_rate=0;
 	cache_hit_rate=0;
+	clock_t begin=clock();
 	while(number_processes_completed!=NUMBER_OF_PROCESSES){//goes through all processes until all are executed
 		if(total_cycle_time>100000)
 			std::cout<<number_processes_completed<<"----"<<Ready_Queue_default.size()<<"----"<<Wait_Queue.size()<<"-----"<<allocated_memory<<std::endl;
@@ -188,6 +191,7 @@ void Process_memory::default_memory_simulation(int size_of_memory){
 		++total_cycle_time;
 	}
 	std::cout<<"Total cycles: "<<total_cycle_time<<std::endl;
+	std::cout<<"System time: "<<clock()-begin<<std::endl;
 	std::cout<<"Cache hit rate: "<<cache_hit_rate/(cache_miss_rate+cache_hit_rate)<<std::endl;
 }
 
